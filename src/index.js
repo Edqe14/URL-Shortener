@@ -60,7 +60,7 @@ app.post('/', [
 
   const url = req.body.url
   const code = req.body.code || createHash('md5').update(`${uniqid.time()}-${url}`).digest('hex').substring(0, 6)
-  const expire = req.body.expire > 0 ? req.body.expire : -1
+  const expire = req.body.expire && req.body.expire > 0 ? req.body.expire : -1
 
   if (await URL.exists({ code })) {
     return res.status(409).send({
@@ -83,7 +83,7 @@ app.post('/', [
   const newURL = new URL(ops)
   await newURL.save().catch(next)
 
-  if (expire > 0) {
+  if (expire !== -1) {
     setTimeout(async () => await newURL.deleteOne({ code, accessCode }), expire)
   }
 
