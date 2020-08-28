@@ -4,8 +4,148 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Link Shortener</title>
+  
+  <link rel="shortcut icon" href="images/favicon.ico" type="image/x-icon">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet"> 
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <header>
+    <h1>Link Shortener</h1>
+    <p>Open source link shortener built using Node</p>
+  </header>
   
+  <main>
+    <section>
+      <h2 id="howto">How to</h2>
+      <span class="legend">? = Optional</span>
+      <div class="grid" id="how">
+        <section id="open">
+          <h3 class="title">Open shorten link</h3>
+          <div class="code">
+            <code>
+              <get>GET</get> /:code
+              <br>
+              <br>
+              RESPONSE <response>302</response> <type>URL</type>
+              <br>
+              <br>
+              RESPONSE <failed>404</failed> <json>application/json</json> {
+                <br>
+                <div class="body">
+                  <key>message</key><semi-colon>:</semi-colon> <type>String</type>
+                </div>
+              }
+              <br>
+              <br>
+              RESPONSE <failed>422</failed> <json>application/json</json> {
+                <br>
+                <div class="body">
+                  <key>message</key><semi-colon>:</semi-colon> <string>"Invalid code"</string>
+                </div>
+              }
+            </code>
+          </div>
+        </section>
+
+        <section id="new">
+          <h3 class="title">Create a new code</h3>
+          <div class="code">
+            <code>
+              <post>POST</post> /
+              <br>
+              <br>
+              BODY <json>application/json</json> {
+                <br>
+                <div class="body">
+                  <key>link</key><semi-colon>:</semi-colon> <type>String</type>&lt;<type>URL</type>&gt;<comma>,</comma>
+                  <br>
+                  <key>?code</key><semi-colon>:</semi-colon> <type>String</type><comma>,</comma>
+                  <br>
+                  <key>?expire</key><semi-colon>:</semi-colon> <type>Int</type>
+                </div>
+              }
+              <br>
+              <br>
+              RESPONSE <response>200</response> <json>application/json</json> {
+                <br>
+                <div class="body">
+                  <key>code</key><semi-colon><semi-colon>:</semi-colon></semi-colon> <type>String</type><comma>,</comma>
+                  <br>
+                  <key>accessCode</key><semi-colon><semi-colon>:</semi-colon></semi-colon> <type>String</type>&lt;<type>Hash</type>&gt;
+                </div>
+              }
+              <br>
+              <br>
+              RESPONSE <failed>409</failed> <json>application/json</json> {
+                <br>
+                <div class="body">
+                  <key>message</key><semi-colon><semi-colon>:</semi-colon></semi-colon> <string>"This code is already used"</string>
+                  <br>
+                  <key>code</key><semi-colon><semi-colon>:</semi-colon></semi-colon> <type>String</type><comma>,</comma>
+                </div>
+              }
+              <br>
+              <br>
+              RESPONSE <failed>422</failed> <json>application/json</json> {
+                <br>
+                <div class="body">
+                  <key>errors</key><semi-colon>:</semi-colon> <type>Object</type>&lt;<type>Array</type>&gt;
+                </div>
+              }
+            </code>
+          </div>
+        </section>
+        
+        <section id="delete">
+          <h3 class="title">Delete existing code</h3>
+          <div class="code">
+            <code>
+              <delete>DELETE</delete> /
+              <br>
+              <br>
+              BODY <json>application/json</json> {
+                <br>
+                <div class="body">
+                  <key>code</key><semi-colon>:</semi-colon> <type>String</type><comma>,</comma>
+                  <br>
+                  <key>accessCode</key><semi-colon>:</semi-colon> <type>String</type>&lt;<type>Hash</type>&gt;<comma>,</comma>
+                </div>
+              }
+              <br>
+              <br>
+              RESPONSE <response>200</response> <json>application/json</json> {
+                <br>
+                <div class="body">
+                  <key>message</key><semi-colon>:</semi-colon> <string>"Successfully removed the URL from database"</string>
+                </div>
+              }
+              <br>
+              <br>
+              RESPONSE <failed>403</failed> <json>application/json</json> {
+                <br>
+                <div class="body">
+                  <key>message</key><semi-colon>:</semi-colon> <string>"Missing access to delete this code"</string>
+                </div>
+              }
+              <br>
+              <br>
+              RESPONSE <failed>404</failed> <json>application/json</json> {
+                <br>
+                <div class="body">
+                  <key>message</key><semi-colon>:</semi-colon> <string>"No URL with this code registered"</string>
+                </div>
+              }
+            </code>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p class="legend">&copy; Edqe_ 2020</p>
+    <a href="https://github.com/Edqe14/URL-Shortener" target="_blank" title="Open the Github repository">Github</a>
+  </footer>
 </body>
 </html>

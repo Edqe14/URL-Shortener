@@ -2,8 +2,9 @@ const express = require('express')
 const bodyparser = require('body-parser')
 const helmet = require('helmet')
 const mongoose = require('mongoose')
-const { body, validationResult } = require('express-validator')
 const uniqid = require('uniqid')
+const ratelimit = require('express-rate-limit')
+const { body, validationResult } = require('express-validator')
 const { join } = require('path')
 const { createHash } = require('crypto')
 require('dotenv').config({ path: join(__dirname, '.env') })
@@ -21,6 +22,11 @@ mongoose.connect(process.env.MONGO_URI, {
 }).catch(console.error)
 
 const URL = require('./models/url.js')
+const limiter = ratelimit({
+  windowMs: 60 * 1000, // 1 min
+  max: 25,
+  message: 'Too many request from this IP'
+})
 
 app.get('/', async (req, res) => {
   return res.sendFile(join(__dirname, 'public', 'index.html'))
@@ -39,9 +45,13 @@ app.get('/:code', async (req, res) => {
   }).exec()
 
   if (!query) {
-    return res.status(404).send({
-      message: 'No URL with this code registered'
-    })
+    if (req.xhr) {
+      return res.status(404).send({
+        message: 'No URL with this code registered'
+      })
+    } else {
+      return res.status(404).sendFile(join(__dirname, 'public', '404.html'))
+    }
   }
 
   query.clicks += 1
@@ -50,7 +60,7 @@ app.get('/:code', async (req, res) => {
   return res.redirect(query.url)
 })
 
-app.post('/', [
+app.post('/', limiter, [
   body('url').isURL(),
   body('code').optional().not().matches(/[^a-z0-9_\-+]/gi),
   body('expire').optional().isInt()
@@ -93,7 +103,7 @@ app.post('/', [
   })
 })
 
-app.delete('/', [
+app.delete('/', limiter, [
   body('code').not().matches(/[^a-z0-9_\-+]/gi),
   body('accessCode').isHash('sha1')
 ], async (req, res, next) => {
@@ -125,7 +135,7 @@ app.delete('/', [
   })
 })
 
-app.use((err, req, res, next) => {
+app.use(async (err, req, res, next) => {
   console.error(err.stack, err.message)
   res.status(500).send('Something went wrong!')
 })
