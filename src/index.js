@@ -1,9 +1,11 @@
 const express = require('express')
 const bodyparser = require('body-parser')
+const cookieparser = require('cookie-parser')
 const helmet = require('helmet')
 const mongoose = require('mongoose')
 const uniqid = require('uniqid')
 const ratelimit = require('express-rate-limit')
+const csrf = require('csurf')
 const { body, validationResult } = require('express-validator')
 const { join } = require('path')
 const { createHash } = require('crypto')
@@ -12,6 +14,7 @@ require('dotenv').config({ path: join(__dirname, '.env') })
 const app = express()
 app.use(helmet())
 app.use(require('sanitize').middleware)
+app.use(cookieparser())
 app.use(bodyparser.json())
 app.use(bodyparser.urlencoded({ extended: false }))
 app.use(express.static('public'))
@@ -26,38 +29,6 @@ const limiter = ratelimit({
   windowMs: 60 * 1000, // 1 min
   max: 25,
   message: 'Too many request from this IP'
-})
-
-app.get('/', async (req, res) => {
-  return res.sendFile(join(__dirname, 'public', 'index.html'))
-})
-
-app.get('/:code', async (req, res) => {
-  const code = req.params.code
-  if (!code) {
-    return res.status(422).json({
-      message: 'Invalid code'
-    })
-  }
-
-  const query = await URL.findOne({
-    code
-  }).exec()
-
-  if (!query) {
-    if (req.xhr) {
-      return res.status(404).json({
-        message: 'No URL with this code registered'
-      })
-    } else {
-      return res.status(404).sendFile(join(__dirname, 'public', '404.html'))
-    }
-  }
-
-  query.clicks += 1
-  query.save().catch(console.error)
-
-  return res.redirect(query.url)
 })
 
 app.post('/', limiter, [
@@ -133,6 +104,40 @@ app.delete('/', limiter, [
   return res.json({
     message: 'Successfully removed the URL from database'
   })
+})
+
+app.use(csrf({ cookie: true }))
+
+app.get('/', async (req, res) => {
+  return res.sendFile(join(__dirname, 'public', 'index.html'))
+})
+
+app.get('/:code', async (req, res) => {
+  const code = req.params.code
+  if (!code) {
+    return res.status(422).json({
+      message: 'Invalid code'
+    })
+  }
+
+  const query = await URL.findOne({
+    code
+  }).exec()
+
+  if (!query) {
+    if (req.xhr) {
+      return res.status(404).json({
+        message: 'No URL with this code registered'
+      })
+    } else {
+      return res.status(404).sendFile(join(__dirname, 'public', '404.html'))
+    }
+  }
+
+  query.clicks += 1
+  query.save().catch(console.error)
+
+  return res.redirect(query.url)
 })
 
 app.use(async (err, req, res, next) => {
