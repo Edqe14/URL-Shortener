@@ -35,7 +35,7 @@ app.get('/', async (req, res) => {
 app.get('/:code', async (req, res) => {
   const code = req.params.code
   if (!code) {
-    return res.status(422).send({
+    return res.status(422).json({
       message: 'Invalid code'
     })
   }
@@ -46,7 +46,7 @@ app.get('/:code', async (req, res) => {
 
   if (!query) {
     if (req.xhr) {
-      return res.status(404).send({
+      return res.status(404).json({
         message: 'No URL with this code registered'
       })
     } else {
@@ -73,7 +73,7 @@ app.post('/', limiter, [
   const expire = req.body.expire && req.body.expire > 0 ? req.body.expire : -1
 
   if (await URL.exists({ code })) {
-    return res.status(409).send({
+    return res.status(409).json({
       message: 'This code is already used',
       code
     })
@@ -97,7 +97,7 @@ app.post('/', limiter, [
     setTimeout(async () => await newURL.deleteOne({ code, accessCode }), expire)
   }
 
-  return res.send({
+  return res.json({
     code,
     accessCode
   })
@@ -114,13 +114,13 @@ app.delete('/', limiter, [
   const accessCode = req.body.accessCode
 
   if (!(await URL.exists({ code }))) {
-    return res.status(404).send({
+    return res.status(404).json({
       message: 'No URL with this code registered'
     })
   }
 
   if (!(await URL.exists({ code, accessCode }))) {
-    return res.status(403).send({
+    return res.status(403).json({
       message: 'Missing access to delete this code'
     })
   }
@@ -130,14 +130,21 @@ app.delete('/', limiter, [
     accessCode
   }).exec().catch(next)
 
-  return res.send({
+  return res.json({
     message: 'Successfully removed the URL from database'
   })
 })
 
 app.use(async (err, req, res, next) => {
+  if (err.message.toLowerCase().includes('unexpected token') && err.message.toLowerCase().includes('json')) {
+    return res.status(400).json({
+      message: 'Invalid JSON body'
+    })
+  }
   console.error(err.stack, err.message)
-  res.status(500).send('Something went wrong!')
+  res.status(500).json({
+    message: 'Something went wrong!'
+  })
 })
 
 app.listen(process.env.PORT, () => console.log(`Listening to port ${process.env.PORT}`))

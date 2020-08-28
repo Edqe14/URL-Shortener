@@ -1,6 +1,6 @@
 const { Schema, model } = require('mongoose')
 
-module.exports = model('url', Schema({
+module.exports = model(process.env.NODE_ENV !== 'development' ? 'url' : 'urltest', Schema({
   id: String,
   code: String,
   url: String,
