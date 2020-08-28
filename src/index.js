@@ -33,7 +33,7 @@ const limiter = ratelimit({
 
 app.post('/', limiter, [
   body('url').isURL(),
-  body('code').optional().not().matches(/[^a-z0-9_\-+]/gi),
+  body('code').optional().not().matches(/[^a-z0-9_\-+.]/gi),
   body('expire').optional().isInt()
 ], async (req, res, next) => {
   const errors = validationResult(req)
@@ -75,7 +75,7 @@ app.post('/', limiter, [
 })
 
 app.delete('/', limiter, [
-  body('code').not().matches(/[^a-z0-9_\-+]/gi),
+  body('code').not().matches(/[^a-z0-9_\-+.]/gi),
   body('accessCode').isHash('sha1')
 ], async (req, res, next) => {
   const errors = validationResult(req)
